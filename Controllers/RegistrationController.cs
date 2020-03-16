@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using AFIAPITest.Models;
 using AFIAPITest.Models.Repository;
 using System.Text.RegularExpressions;
+using AFIAPITest.Services;
 
 namespace AFIAPITest.Controllers
 {
@@ -100,19 +101,19 @@ namespace AFIAPITest.Controllers
 
         public string Validate(Registration entity)
         {
+            Validation valid = new Validation();
             string validationError = "";
-            string policyPattern = @"[A-Z]{2}-\d{6}";
-            string emailPattern = @"[a-zA-Z0-9.]{4,}@[a-zA-Z0-9]{2,}\.(com|co.uk)";
 
             //Check length of Firstname
-            if (entity.Firstname.Length < 3 || entity.Firstname.Length > 50)
+            if(!valid.NameLength(entity.Firstname))
                 validationError = "Firstname needs to be >3 and < 50 characters in length. \r\n";
+            
             //Check length of Surname
-            if (entity.Surname.Length < 3 || entity.Surname.Length > 50)
+            if (!valid.NameLength(entity.Surname))
                 validationError += "Surname needs to be >3 and < 50 characters in length. \r\n";
+
             //Check that policy number matches the following format XX-999999. Where XX are any capitalised alpha character followed by a hyphen and 6 numbers.
-            Match policyMatch = Regex.Match(entity.PolicyReference, policyPattern);
-            if (!policyMatch.Success)
+            if (!valid.PolicyCheck(entity.PolicyReference))
                 validationError += "Policy Reference is in the wrong format XX-999999. \r\n";
 
             if (entity.DOB != null || !string.IsNullOrEmpty(entity.Email))
@@ -120,17 +121,15 @@ namespace AFIAPITest.Controllers
                 //Check Age is at least 18
                 if (entity.DOB != null)
                 {
-                    if (CalcAge((DateTime)entity.DOB) < 18)
+                    if (valid.CalcAge((DateTime)entity.DOB) < 18)
                         validationError += "Registrant needs to be at least 18 years old. \r\n";
                 }
                 //Check email format matches required pattern
                 if (!string.IsNullOrEmpty(entity.Email))
                 {
-                    Match emailMatch = Regex.Match(entity.Email, emailPattern);
-                    if (!emailMatch.Success)
+                    if (!valid.EmailCheck(entity.Email))
                         validationError += "Email required string of at least 4 alpha numeric chars followed by an ‘@’ sign and then another string of at least 2 alpha numeric chars. The email address should end in either ‘.com’ or ‘.co.uk’.. \r\n";
                 }
-
             }
             else
             {
@@ -141,23 +140,5 @@ namespace AFIAPITest.Controllers
 
         }
 
-        /// <summary>
-        /// Calculate the age of a person from provided DOB
-        /// </summary>
-        /// <param name="dob"></param>
-        /// <returns></returns>
-        public int CalcAge(DateTime dob)
-        {
-            DateTime dateNow = DateTime.Now;
-
-            // get the difference in years
-            int age = dateNow.Year - dob.Year;
-
-            // subtract a year if day of birth greater than today
-            if (dateNow.Month < dob.Month || (dateNow.Month == dob.Month && dateNow.Day < dob.Day))
-                age = age - 1;
-
-            return age;
-        }
     }
 }
