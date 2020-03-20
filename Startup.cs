@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using AFIAPITest.Models;
 using AFIAPITest.Models.Repository;
 using AFIAPITest.Models.DataManager;
+using AFIAPITest.Interfaces;
+using AFIAPITest.Services;
 
 
 namespace AFIAPITest
@@ -28,7 +30,7 @@ namespace AFIAPITest
             services.AddDbContextPool<RegistrationContext>(opts => opts.UseSqlServer(Configuration["ConnectionString:RegistrationDb"]));
             services.AddScoped<IDataRepository<Registration>, RegistrationManager>();
             services.AddControllers();
-
+            services.AddScoped<IValidation, Validation>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
